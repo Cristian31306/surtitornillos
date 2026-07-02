@@ -20,8 +20,8 @@
         <form method="POST" action="{{ route('invoices.update', $invoice) }}">
             @csrf @method('PUT')
 
-            {{-- Cliente y Vendedor --}}
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+            {{-- Cliente --}}
+            <div style="margin-bottom:1.25rem;">
                 <div class="form-group">
                     <label style="font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); display:block; margin-bottom:0.5rem;">
                         Cliente <span style="color:var(--danger)">*</span>
@@ -31,19 +31,6 @@
                         @foreach($clients as $client)
                             <option value="{{ $client->id }}" {{ (old('client_id', $invoice->client_id) == $client->id) ? 'selected' : '' }}>
                                 {{ $client->name }}@if($client->document_id) — {{ $client->document_id }}@endif
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label style="font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); display:block; margin-bottom:0.5rem;">
-                        Vendedor
-                    </label>
-                    <select name="seller_id" class="form-input searchable-select" style="width:100%; box-sizing:border-box; cursor:pointer;">
-                        <option value="">— Sin vendedor asignado —</option>
-                        @foreach($sellers as $seller)
-                            <option value="{{ $seller->id }}" {{ old('seller_id', $invoice->seller_id) == $seller->id ? 'selected' : '' }}>
-                                {{ $seller->name }}
                             </option>
                         @endforeach
                     </select>

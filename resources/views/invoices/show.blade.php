@@ -15,9 +15,6 @@
         <p style="color:var(--text-muted); margin-top:0.2rem;">Cliente: <strong style="color:var(--text-main)">{{ $invoice->client->name }}</strong>
             @if($invoice->client->document_id) <span style="font-size:0.8rem; margin-left:0.5rem;">· {{ $invoice->client->document_id }}</span>@endif
         </p>
-        <p style="color:var(--text-muted); margin-top:0.1rem; font-size:0.85rem;">
-            Vendedor: <strong style="color:var(--primary)">{{ $invoice->seller ? $invoice->seller->name : 'Sin asignar' }}</strong>
-        </p>
     </div>
     <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
         {{-- Estado actual (solo lectura, lo gestiona el sistema) --}}

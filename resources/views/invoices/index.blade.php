@@ -109,16 +109,6 @@
                             <td><strong style="color:var(--primary);">{{ $inv->invoice_number }}</strong></td>
                             <td>
                                 <div style="font-weight:600;">{{ $inv->client_name }}</div>
-                                @php
-                                    // Buscar vendedor de esta factura
-                                    $sellerName = \App\Models\Invoice::find($inv->invoice_id)->seller->name ?? null;
-                                @endphp
-                                @if($sellerName)
-                                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:0.15rem;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                        {{ $sellerName }}
-                                    </div>
-                                @endif
                             </td>
                             <td style="white-space:nowrap;color:var(--text-muted);font-size:0.85rem;">
                                 {{ fecha_co($inv->issue_date) }}</td>

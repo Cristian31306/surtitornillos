@@ -103,15 +103,13 @@ class InvoiceController extends Controller
     public function create()
     {
         $clients = Client::orderBy('name')->get();
-        $sellers = \App\Models\Seller::where('status', 'activo')->orderBy('name')->get();
-        return view('invoices.create', compact('clients', 'sellers'));
+        return view('invoices.create', compact('clients'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'client_id'      => 'required|exists:clients,id',
-            'seller_id'      => 'nullable|exists:sellers,id',
             'invoice_number' => 'required|string|max:50|unique:invoices,invoice_number',
             'issue_date'     => 'required|date',
             'total_amount'   => 'required|numeric|min:0',
@@ -137,7 +135,7 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
-        $invoice->load(['client', 'seller', 'payments', 'adjustments']);
+        $invoice->load(['client', 'payments', 'adjustments']);
 
         $summary = DB::selectOne("
             SELECT * FROM v_invoices_summary WHERE invoice_id = ?
@@ -149,15 +147,13 @@ class InvoiceController extends Controller
     public function edit(Invoice $invoice)
     {
         $clients = Client::orderBy('name')->get();
-        $sellers = \App\Models\Seller::where('status', 'activo')->orderBy('name')->get();
-        return view('invoices.edit', compact('invoice', 'clients', 'sellers'));
+        return view('invoices.edit', compact('invoice', 'clients'));
     }
 
     public function update(Request $request, Invoice $invoice)
     {
         $validated = $request->validate([
             'client_id'      => 'required|exists:clients,id',
-            'seller_id'      => 'nullable|exists:sellers,id',
             'invoice_number' => 'required|string|max:50|unique:invoices,invoice_number,' . $invoice->id,
             'issue_date'     => 'required|date',
             'total_amount'   => 'required|numeric|min:0',

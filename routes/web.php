@@ -43,12 +43,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/facturas/{invoice}/ajustes', [\App\Http\Controllers\AdjustmentController::class, 'store'])->name('adjustments.store');
     Route::delete('/ajustes/{adjustment}', [\App\Http\Controllers\AdjustmentController::class, 'destroy'])->name('adjustments.destroy');
 
-    // Vendedores
-    Route::resource('sellers', \App\Http\Controllers\SellerController::class)->except(['create', 'show', 'edit']);
-
-    // Comisiones
-    Route::get('/comisiones', [\App\Http\Controllers\CommissionController::class, 'index'])->name('commissions.index');
-
     // Gestión de Usuarios (Admin únicamente)
     Route::get('/usuarios', [\App\Http\Controllers\UserController::class, 'index'])->name('users.index');
     Route::post('/usuarios', [\App\Http\Controllers\UserController::class, 'store'])->name('users.store');
