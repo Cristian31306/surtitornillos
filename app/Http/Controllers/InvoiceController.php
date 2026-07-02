@@ -1,0 +1,214 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Invoice;
+use App\Models\Client;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class InvoiceController extends Controller
+{
+    public function index(Request $request)
+    {
+        $search  = $request->query('search');
+        $status  = $request->query('status');
+        $cliente = $request->query('cliente');
+
+        $invoices = DB::table('v_invoices_summary')
+            ->when($search,  fn($q) => $q->where('invoice_number', 'like', "%{$search}%"))
+            ->when($status,  fn($q) => $q->where('configured_status', $status))
+            ->when($cliente, fn($q) => $q->where('client_name', 'like', "%{$cliente}%"))
+            ->orderByDesc('issue_date')
+            ->orderByDesc('invoice_id')
+            ->paginate(25)
+            ->withQueryString();
+
+        $totals = DB::selectOne("
+            SELECT
+                COUNT(*) as total_facturas,
+                SUM(current_balance) as total_pendiente,
+                SUM(CASE WHEN configured_status = 'pendiente' THEN 1 ELSE 0 END) as facturas_pendientes
+            FROM v_invoices_summary
+        ");
+
+        return view('invoices.index', compact('invoices', 'search', 'status', 'cliente', 'totals'));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $search  = $request->query('search');
+        $status  = $request->query('status');
+        $cliente = $request->query('cliente');
+
+        $invoices = DB::table('v_invoices_summary')
+            ->when($search,  fn($q) => $q->where('invoice_number', 'like', "%{$search}%"))
+            ->when($status,  fn($q) => $q->where('configured_status', $status))
+            ->when($cliente, fn($q) => $q->where('client_name', 'like', "%{$cliente}%"))
+            ->orderByDesc('issue_date')
+            ->orderByDesc('invoice_id')
+            ->get();
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Estilos básicos
+        $sheet->setTitle('Cartera Facturas');
+        
+        // Encabezados
+        $headers = ['Número Factura', 'Cliente', 'Fecha Emisión', 'Valor Total', 'Descuento', 'Valor Neto', 'Total Cobrado', 'Saldo Pendiente', 'Estado'];
+        foreach ($headers as $colIdx => $header) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1);
+            $sheet->setCellValue($colLetter . '1', $header);
+            $sheet->getStyle($colLetter . '1')->getFont()->setBold(true);
+            $sheet->getStyle($colLetter . '1')->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()->setARGB('F1F5F9');
+        }
+
+        // Datos
+        $row = 2;
+        foreach ($invoices as $inv) {
+            $sheet->setCellValue('A' . $row, $inv->invoice_number);
+            $sheet->setCellValue('B' . $row, $inv->client_name);
+            $sheet->setCellValue('C' . $row, fecha_co($inv->issue_date));
+            $sheet->setCellValue('D' . $row, $inv->total_amount);
+            $sheet->setCellValue('E' . $row, $inv->discount);
+            $sheet->setCellValue('F' . $row, $inv->net_amount);
+            $sheet->setCellValue('G' . $row, $inv->total_payments + $inv->total_adjustments);
+            $sheet->setCellValue('H' . $row, $inv->current_balance);
+            $sheet->setCellValue('I' . $row, ucfirst($inv->configured_status));
+
+            // Formatos numéricos de moneda colombiana
+            $sheet->getStyle('D' . $row . ':H' . $row)->getNumberFormat()->setFormatCode('$#,##0');
+            $row++;
+        }
+
+        // Autoajustar columnas
+        foreach (range(1, count($headers)) as $colIdx) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="Cartera_Surtitornillos_' . date('d_m_Y') . '.xlsx"');
+        header('Cache-Control: max-age=0');
+        
+        $writer->save('php://output');
+        exit;
+    }
+
+    public function create()
+    {
+        $clients = Client::orderBy('name')->get();
+        $sellers = \App\Models\Seller::where('status', 'activo')->orderBy('name')->get();
+        return view('invoices.create', compact('clients', 'sellers'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'client_id'      => 'required|exists:clients,id',
+            'seller_id'      => 'nullable|exists:sellers,id',
+            'invoice_number' => 'required|string|max:50|unique:invoices,invoice_number',
+            'issue_date'     => 'required|date',
+            'total_amount'   => 'required|numeric|min:0',
+            'discount'       => 'nullable|numeric|min:0',
+            'observation'    => 'nullable|string|max:1000',
+        ]);
+
+        $validated['discount'] = $validated['discount'] ?? 0;
+        $validated['status'] = 'pendiente';
+
+        $invoice = Invoice::create($validated);
+
+        \App\Helpers\AuditHelper::log(
+            'creacion_factura',
+            'Invoice',
+            $invoice->id,
+            "Creó la factura #{$invoice->invoice_number} para el cliente \"{$invoice->client->name}\" por valor neto de $ " . number_format($invoice->total_amount - $invoice->discount, 0, ',', '.')
+        );
+
+        return redirect()->route('invoices.show', $invoice)
+            ->with('success', "Factura #{$invoice->invoice_number} creada exitosamente.");
+    }
+
+    public function show(Invoice $invoice)
+    {
+        $invoice->load(['client', 'seller', 'payments', 'adjustments']);
+
+        $summary = DB::selectOne("
+            SELECT * FROM v_invoices_summary WHERE invoice_id = ?
+        ", [$invoice->id]);
+
+        return view('invoices.show', compact('invoice', 'summary'));
+    }
+
+    public function edit(Invoice $invoice)
+    {
+        $clients = Client::orderBy('name')->get();
+        $sellers = \App\Models\Seller::where('status', 'activo')->orderBy('name')->get();
+        return view('invoices.edit', compact('invoice', 'clients', 'sellers'));
+    }
+
+    public function update(Request $request, Invoice $invoice)
+    {
+        $validated = $request->validate([
+            'client_id'      => 'required|exists:clients,id',
+            'seller_id'      => 'nullable|exists:sellers,id',
+            'invoice_number' => 'required|string|max:50|unique:invoices,invoice_number,' . $invoice->id,
+            'issue_date'     => 'required|date',
+            'total_amount'   => 'required|numeric|min:0',
+            'discount'       => 'nullable|numeric|min:0',
+            'observation'    => 'nullable|string|max:1000',
+        ]);
+
+        $validated['discount'] = $validated['discount'] ?? 0;
+
+        $invoice->update($validated);
+
+        \App\Helpers\AuditHelper::log(
+            'edicion_factura',
+            'Invoice',
+            $invoice->id,
+            "Editó la factura #{$invoice->invoice_number}"
+        );
+
+        return redirect()->route('invoices.show', $invoice)
+            ->with('success', "Factura #{$invoice->invoice_number} actualizada.");
+    }
+
+    public function updateStatus(Request $request, Invoice $invoice)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:pendiente,pagada,anulada',
+        ]);
+
+        $oldStatus = $invoice->status;
+        $targetStatus = $validated['status'];
+
+        if ($targetStatus !== 'anulada') {
+            // Recalcular saldo real
+            $totalPagado = $invoice->payments()->sum('amount');
+            $totalAjuste = $invoice->adjustments()->sum('amount');
+            $saldo = $invoice->total_amount - $invoice->discount - $totalPagado - $totalAjuste;
+            
+            $targetStatus = ($saldo <= 0.01) ? 'pagada' : 'pendiente';
+        }
+
+        $invoice->update(['status' => $targetStatus]);
+
+        \App\Helpers\AuditHelper::log(
+            'anulacion_factura',
+            'Invoice',
+            $invoice->id,
+            $targetStatus === 'anulada' 
+                ? "Anuló la factura #{$invoice->invoice_number}" 
+                : "Re-activó la factura #{$invoice->invoice_number} (Estado asignado: \"{$targetStatus}\")"
+        );
+
+        return back()->with('success', $targetStatus === 'anulada' ? 'Factura anulada con éxito.' : 'Factura re-activada con éxito.');
+    }
+}
