@@ -54,4 +54,7 @@ Route::middleware('auth')->group(function () {
 
     // Configuración / Membresía (Admin únicamente)
     Route::post('/configuracion/membresia', [\App\Http\Controllers\SettingController::class, 'updateMembership'])->name('settings.membership');
+
+    // Perfil / Cambio de contraseña
+    Route::put('/perfil/contrasena', [\App\Http\Controllers\UserController::class, 'updateOwnPassword'])->name('profile.password.update');
 });

@@ -105,4 +105,35 @@ class UserController extends Controller
 
         return back()->with('success', "Usuario \"{$username}\" eliminado correctamente.");
     }
+
+    public function updateOwnPassword(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'password'         => 'required|string|min:4|confirmed',
+        ], [
+            'current_password.required' => 'La contraseña actual es obligatoria.',
+            'password.required'         => 'La nueva contraseña es obligatoria.',
+            'password.min'              => 'La nueva contraseña debe tener al menos 4 caracteres.',
+            'password.confirmed'        => 'La confirmación de la nueva contraseña no coincide.',
+        ]);
+
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return back()->withErrors(['current_password' => 'La contraseña actual no es correcta.']);
+        }
+
+        $user->password = Hash::make($validated['password']);
+        $user->save();
+
+        \App\Helpers\AuditHelper::log(
+            'cambio_contrasena_propia',
+            'User',
+            $user->id,
+            "El usuario \"{$user->username}\" cambió su propia contraseña."
+        );
+
+        return back()->with('success', 'Contraseña actualizada con éxito.');
+    }
 }

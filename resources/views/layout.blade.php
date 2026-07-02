@@ -154,8 +154,11 @@
                     @endif
                 </nav>
                 <div class="sidebar-footer">
-                    <div class="user-info">
-                        <span class="user-name">{{ auth()->user()->name ?: auth()->user()->username }}</span>
+                    <div class="user-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span class="user-name" style="word-break: break-all; margin-right: 0.5rem;">{{ auth()->user()->name ?: auth()->user()->username }}</span>
+                        <button type="button" onclick="openModal('change-password-modal')" style="background: none; border: none; cursor: pointer; color: #64748b; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.2s; flex-shrink: 0;" onmouseover="this.style.color='#4f46e5'; this.style.backgroundColor='rgba(79, 70, 229, 0.08)';" onmouseout="this.style.color='#64748b'; this.style.backgroundColor='transparent';" title="Cambiar Contraseña">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </button>
                     </div>
                     <form action="{{ route('logout') }}" method="POST">
                         @csrf
@@ -192,6 +195,43 @@
                     @yield('content')
                 </div>
             </main>
+        </div>
+
+        <!-- Modal para cambiar contraseña -->
+        <div id="change-password-modal" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div>
+                        <h3 class="modal-title" style="margin: 0;">Cambiar Contraseña</h3>
+                        <p class="modal-subtitle" style="margin: 0.25rem 0 0 0;">Actualiza la contraseña de tu cuenta</p>
+                    </div>
+                    <button type="button" class="modal-close-btn" onclick="closeModal('change-password-modal')">&times;</button>
+                </div>
+                <form action="{{ route('profile.password.update') }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div style="margin-bottom: 1.25rem;">
+                        <label for="current_password" style="display: block; font-size: 0.85rem; font-weight: 500; color: #344054; margin-bottom: 0.5rem; text-align: left;">Contraseña Actual</label>
+                        <input type="password" name="current_password" id="current_password" required placeholder="••••••••" style="width: 100%; padding: 0.65rem 0.8rem; font-size: 0.9rem; border: 1px solid #d0d5dd; border-radius: 8px; outline: none; box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); transition: border-color 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#4f46e5';">
+                    </div>
+
+                    <div style="margin-bottom: 1.25rem;">
+                        <label for="password" style="display: block; font-size: 0.85rem; font-weight: 500; color: #344054; margin-bottom: 0.5rem; text-align: left;">Nueva Contraseña</label>
+                        <input type="password" name="password" id="password" required placeholder="Mínimo 4 caracteres" style="width: 100%; padding: 0.65rem 0.8rem; font-size: 0.9rem; border: 1px solid #d0d5dd; border-radius: 8px; outline: none; box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); transition: border-color 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#4f46e5';">
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="password_confirmation" style="display: block; font-size: 0.85rem; font-weight: 500; color: #344054; margin-bottom: 0.5rem; text-align: left;">Confirmar Nueva Contraseña</label>
+                        <input type="password" name="password_confirmation" id="password_confirmation" required placeholder="••••••••" style="width: 100%; padding: 0.65rem 0.8rem; font-size: 0.9rem; border: 1px solid #d0d5dd; border-radius: 8px; outline: none; box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); transition: border-color 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#4f46e5';">
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                        <button type="button" class="btn-cancel" onclick="closeModal('change-password-modal')" style="padding: 0.65rem 1rem; font-size: 0.9rem; font-weight: 500; border: 1px solid #d0d5dd; border-radius: 8px; background: white; color: #344054; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb';" onmouseout="this.style.backgroundColor='white';">Cancelar</button>
+                        <button type="submit" class="btn-submit" style="padding: 0.65rem 1rem; font-size: 0.9rem; font-weight: 500; border: none; border-radius: 8px; background: #4f46e5; color: white; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#4338ca';" onmouseout="this.style.backgroundColor='#4f46e5';">Actualizar Contraseña</button>
+                    </div>
+                </form>
+            </div>
         </div>
     @else
         @yield('content')
