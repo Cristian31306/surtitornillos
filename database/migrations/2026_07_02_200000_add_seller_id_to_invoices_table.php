@@ -14,9 +14,13 @@ return new class extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS v_invoices_summary');
 
-        Schema::table('invoices', function (Blueprint $table) {
-            $table->foreignId('seller_id')->nullable()->constrained('sellers')->nullOnDelete();
-        });
+        // Verificamos si la columna ya existe para evitar error "duplicate column name"
+        // en entornos donde fue creada manualmente o por una ejecución parcial previa.
+        if (!Schema::hasColumn('invoices', 'seller_id')) {
+            Schema::table('invoices', function (Blueprint $table) {
+                $table->foreignId('seller_id')->nullable()->constrained('sellers')->nullOnDelete();
+            });
+        }
 
         $sql = "CREATE VIEW v_invoices_summary AS
  SELECT 
