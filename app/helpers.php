@@ -45,3 +45,17 @@ if (!function_exists('fecha_co_input')) {
         }
     }
 }
+
+if (!function_exists('dinero')) {
+    /**
+     * Formatea un valor numérico a moneda (pesos colombianos).
+     *
+     * @param  mixed  $valor
+     * @return string
+     */
+    function dinero($valor): string
+    {
+        return '$ ' . number_format($valor ?? 0, 0, ',', '.');
+    }
+}
+
