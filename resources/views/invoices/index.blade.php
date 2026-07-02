@@ -94,11 +94,47 @@
                     <tr>
                         <th>Nº Factura</th>
                         <th>Cliente</th>
-                        <th>Fecha ↓</th>
-                        <th style="text-align:right;">Total</th>
-                        <th style="text-align:right;">Descuento</th>
-                        <th style="text-align:right;">Cobrado</th>
-                        <th style="text-align:right;">Saldo</th>
+                        @php
+                            $sortBy = request()->query('sort_by', 'issue_date');
+                            $sortDir = request()->query('sort_dir', 'desc');
+                            
+                            $getSortUrl = function($column) use ($sortBy, $sortDir) {
+                                $newDir = ($sortBy === $column && $sortDir === 'desc') ? 'asc' : 'desc';
+                                return request()->fullUrlWithQuery(['sort_by' => $column, 'sort_dir' => $newDir]);
+                            };
+                            
+                            $getSortIcon = function($column) use ($sortBy, $sortDir) {
+                                if ($sortBy !== $column) return '<span style="color:#cbd5e1; font-size:0.8rem; margin-left:4px;">↕</span>';
+                                return $sortDir === 'asc' 
+                                    ? '<span style="color:var(--primary); font-size:0.8rem; margin-left:4px;">↑</span>' 
+                                    : '<span style="color:var(--primary); font-size:0.8rem; margin-left:4px;">↓</span>';
+                            };
+                        @endphp
+                        <th>
+                            <a href="{{ $getSortUrl('issue_date') }}" style="color:inherit; text-decoration:none; display:flex; align-items:center;">
+                                Fecha {!! $getSortIcon('issue_date') !!}
+                            </a>
+                        </th>
+                        <th style="text-align:right;">
+                            <a href="{{ $getSortUrl('total_amount') }}" style="color:inherit; text-decoration:none; display:flex; align-items:center; justify-content:flex-end;">
+                                Total {!! $getSortIcon('total_amount') !!}
+                            </a>
+                        </th>
+                        <th style="text-align:right;">
+                            <a href="{{ $getSortUrl('discount') }}" style="color:inherit; text-decoration:none; display:flex; align-items:center; justify-content:flex-end;">
+                                Descuento {!! $getSortIcon('discount') !!}
+                            </a>
+                        </th>
+                        <th style="text-align:right;">
+                            <a href="{{ $getSortUrl('total_payments') }}" style="color:inherit; text-decoration:none; display:flex; align-items:center; justify-content:flex-end;">
+                                Cobrado {!! $getSortIcon('total_payments') !!}
+                            </a>
+                        </th>
+                        <th style="text-align:right;">
+                            <a href="{{ $getSortUrl('current_balance') }}" style="color:inherit; text-decoration:none; display:flex; align-items:center; justify-content:flex-end;">
+                                Saldo {!! $getSortIcon('current_balance') !!}
+                            </a>
+                        </th>
                         <th style="text-align:center;">Estado</th>
                         <th></th>
                     </tr>

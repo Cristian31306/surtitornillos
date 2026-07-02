@@ -14,13 +14,27 @@ class InvoiceController extends Controller
         $search  = $request->query('search');
         $status  = $request->query('status');
         $cliente = $request->query('cliente');
+        
+        $sortBy  = $request->query('sort_by', 'issue_date');
+        $sortDir = $request->query('sort_dir', 'desc');
+        
+        $allowedSorts = [
+            'issue_date' => 'issue_date',
+            'total_amount' => 'total_amount',
+            'discount' => 'discount',
+            'total_payments' => 'total_payments',
+            'current_balance' => 'current_balance'
+        ];
+        
+        $sortColumn = $allowedSorts[$sortBy] ?? 'issue_date';
+        $validSortDir = in_array(strtolower($sortDir), ['asc', 'desc']) ? $sortDir : 'desc';
 
         $invoices = DB::table('v_invoices_summary')
             ->when($search,  fn($q) => $q->where('invoice_number', 'like', "%{$search}%"))
             ->when($status,  fn($q) => $q->where('configured_status', $status))
             ->when($cliente, fn($q) => $q->where('client_name', 'like', "%{$cliente}%"))
-            ->orderByDesc('issue_date')
-            ->orderByDesc('invoice_id')
+            ->orderBy($sortColumn, $validSortDir)
+            ->when($sortColumn !== 'invoice_id', fn($q) => $q->orderByDesc('invoice_id'))
             ->paginate(25)
             ->withQueryString();
 
@@ -40,14 +54,43 @@ class InvoiceController extends Controller
         $search  = $request->query('search');
         $status  = $request->query('status');
         $cliente = $request->query('cliente');
+        
+        $sortBy  = $request->query('sort_by', 'issue_date');
+        $sortDir = $request->query('sort_dir', 'desc');
+        
+        $allowedSorts = [
+            'issue_date' => 'issue_date',
+            'total_amount' => 'total_amount',
+            'discount' => 'discount',
+            'total_payments' => 'total_payments',
+            'current_balance' => 'current_balance'
+        ];
+        
+        $sortColumn = $allowedSorts[$sortBy] ?? 'issue_date';
+        $validSortDir = in_array(strtolower($sortDir), ['asc', 'desc']) ? $sortDir : 'desc';
 
         $invoices = DB::table('v_invoices_summary')
             ->when($search,  fn($q) => $q->where('invoice_number', 'like', "%{$search}%"))
             ->when($status,  fn($q) => $q->where('configured_status', $status))
             ->when($cliente, fn($q) => $q->where('client_name', 'like', "%{$cliente}%"))
-            ->orderByDesc('issue_date')
-            ->orderByDesc('invoice_id')
+            ->orderBy($sortColumn, $validSortDir)
+            ->when($sortColumn !== 'invoice_id', fn($q) => $q->orderByDesc('invoice_id'))
             ->get();
+            
+        // Load payments for the retrieved invoices
+        $invoiceIds = $invoices->pluck('invoice_id')->toArray();
+        $payments = DB::table('payments')
+            ->whereIn('invoice_id', $invoiceIds)
+            ->orderBy('payment_date', 'asc')
+            ->get()
+            ->groupBy('invoice_id');
+            
+        $maxPayments = 0;
+        foreach ($payments as $invPayments) {
+            if (count($invPayments) > $maxPayments) {
+                $maxPayments = count($invPayments);
+            }
+        }
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -57,6 +100,12 @@ class InvoiceController extends Controller
         
         // Encabezados
         $headers = ['Número Factura', 'Cliente', 'Fecha Emisión', 'Valor Total', 'Descuento', 'Valor Neto', 'Total Cobrado', 'Saldo Pendiente', 'Estado'];
+        
+        for ($i = 1; $i <= $maxPayments; $i++) {
+            $headers[] = "Fecha Abono $i";
+            $headers[] = "Valor Abono $i";
+        }
+        
         foreach ($headers as $colIdx => $header) {
             $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1);
             $sheet->setCellValue($colLetter . '1', $header);
@@ -81,6 +130,21 @@ class InvoiceController extends Controller
 
             // Formatos numéricos de moneda colombiana
             $sheet->getStyle('D' . $row . ':H' . $row)->getNumberFormat()->setFormatCode('$#,##0');
+            
+            $invPayments = $payments->get($inv->invoice_id) ?? [];
+            $colIndex = 10; // Empezar después de Estado (I es la 9)
+            
+            foreach ($invPayments as $payment) {
+                $dateCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $amountCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
+                
+                $sheet->setCellValue($dateCol . $row, fecha_co($payment->payment_date));
+                $sheet->setCellValue($amountCol . $row, $payment->amount);
+                $sheet->getStyle($amountCol . $row)->getNumberFormat()->setFormatCode('$#,##0');
+                
+                $colIndex += 2;
+            }
+            
             $row++;
         }
 
