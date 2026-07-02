@@ -106,40 +106,41 @@
 
 {{-- MODAL CREAR --}}
 <div id="modal-create-seller" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-box">
         <div class="modal-header">
-            <h3 class="modal-title">Nuevo Vendedor</h3>
-            <button onclick="closeModal('modal-create-seller')" class="modal-close">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <div>
+                <div class="modal-title">Nuevo Vendedor</div>
+                <div class="modal-subtitle">Registra un nuevo vendedor en el sistema.</div>
+            </div>
+            <button onclick="closeModal('modal-create-seller')" class="modal-close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
         <form action="{{ route('sellers.store') }}" method="POST">
             @csrf
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Nombre del Vendedor <span style="color:#ef4444">*</span></label>
-                    <input type="text" name="name" class="form-input" required placeholder="Ej: Janine Villamizar">
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label" style="font-size:0.75rem;">Nombre del Vendedor <span style="color:#ef4444">*</span></label>
+                <input type="text" name="name" class="form-input" required placeholder="Ej: Janine Villamizar" style="width:100%; box-sizing:border-box;">
+            </div>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+                <div class="form-group" style="flex:1; min-width:140px;">
+                    <label class="form-label" style="font-size:0.75rem;">Documento</label>
+                    <input type="text" name="document_id" class="form-input" placeholder="Ej: 1090..." style="width:100%; box-sizing:border-box;">
                 </div>
-                <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                    <div class="form-group" style="flex:1; min-width:140px;">
-                        <label class="form-label">Documento</label>
-                        <input type="text" name="document_id" class="form-input" placeholder="Ej: 1090...">
-                    </div>
-                    <div class="form-group" style="flex:1; min-width:140px;">
-                        <label class="form-label">Teléfono</label>
-                        <input type="text" name="phone" class="form-input" placeholder="Ej: 300...">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Estado</label>
-                    <select name="status" class="form-select">
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                    </select>
+                <div class="form-group" style="flex:1; min-width:140px;">
+                    <label class="form-label" style="font-size:0.75rem;">Teléfono</label>
+                    <input type="text" name="phone" class="form-input" placeholder="Ej: 300..." style="width:100%; box-sizing:border-box;">
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="filter-btn-secondary" onclick="closeModal('modal-create-seller')">Cancelar</button>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label class="form-label" style="font-size:0.75rem;">Estado</label>
+                <select name="status" class="form-input" style="width:100%; box-sizing:border-box; cursor:pointer;">
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+                <button type="button" class="filter-btn-clear" onclick="closeModal('modal-create-seller')">Cancelar</button>
                 <button type="submit" class="filter-btn-primary">Guardar Vendedor</button>
             </div>
         </form>
@@ -148,40 +149,41 @@
 
 {{-- MODAL EDITAR --}}
 <div id="modal-edit-seller" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-box">
         <div class="modal-header">
-            <h3 class="modal-title">Editar Vendedor</h3>
-            <button onclick="closeModal('modal-edit-seller')" class="modal-close">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <div>
+                <div class="modal-title">Editar Vendedor</div>
+                <div class="modal-subtitle">Modifica la información del vendedor seleccionado.</div>
+            </div>
+            <button onclick="closeModal('modal-edit-seller')" class="modal-close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
         <form id="form-edit-seller" method="POST">
             @csrf @method('PUT')
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Nombre del Vendedor <span style="color:#ef4444">*</span></label>
-                    <input type="text" name="name" id="edit-seller-name" class="form-input" required>
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label" style="font-size:0.75rem;">Nombre del Vendedor <span style="color:#ef4444">*</span></label>
+                <input type="text" name="name" id="edit-seller-name" class="form-input" required style="width:100%; box-sizing:border-box;">
+            </div>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+                <div class="form-group" style="flex:1; min-width:140px;">
+                    <label class="form-label" style="font-size:0.75rem;">Documento</label>
+                    <input type="text" name="document_id" id="edit-seller-document" class="form-input" style="width:100%; box-sizing:border-box;">
                 </div>
-                <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                    <div class="form-group" style="flex:1; min-width:140px;">
-                        <label class="form-label">Documento</label>
-                        <input type="text" name="document_id" id="edit-seller-document" class="form-input">
-                    </div>
-                    <div class="form-group" style="flex:1; min-width:140px;">
-                        <label class="form-label">Teléfono</label>
-                        <input type="text" name="phone" id="edit-seller-phone" class="form-input">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Estado</label>
-                    <select name="status" id="edit-seller-status" class="form-select">
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                    </select>
+                <div class="form-group" style="flex:1; min-width:140px;">
+                    <label class="form-label" style="font-size:0.75rem;">Teléfono</label>
+                    <input type="text" name="phone" id="edit-seller-phone" class="form-input" style="width:100%; box-sizing:border-box;">
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="filter-btn-secondary" onclick="closeModal('modal-edit-seller')">Cancelar</button>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label class="form-label" style="font-size:0.75rem;">Estado</label>
+                <select name="status" id="edit-seller-status" class="form-input" style="width:100%; box-sizing:border-box; cursor:pointer;">
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+                <button type="button" class="filter-btn-clear" onclick="closeModal('modal-edit-seller')">Cancelar</button>
                 <button type="submit" class="filter-btn-primary">Actualizar Vendedor</button>
             </div>
         </form>
