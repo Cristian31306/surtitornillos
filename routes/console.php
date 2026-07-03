@@ -13,4 +13,5 @@ foreach (['08:00', '12:00', '15:00', '18:00'] as $time) {
     Schedule::command('backup:telegram')->at($time);
 }
 
-
+// Programar verificación de vencimiento todos los días a las 09:00
+Schedule::command('app:check-system-expiration')->dailyAt('09:00');
