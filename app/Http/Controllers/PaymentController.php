@@ -65,4 +65,75 @@ class PaymentController extends Controller
 
         return back()->with('success', 'Abono eliminado.');
     }
+
+    public function exportExcel(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = $request->start_date;
+        $endDate = $request->end_date;
+
+        $payments = \Illuminate\Support\Facades\DB::table('payments')
+            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
+            ->join('clients', 'invoices.client_id', '=', 'clients.id')
+            ->whereBetween('payment_date', [$startDate, $endDate])
+            ->select('payments.*', 'invoices.invoice_number', 'clients.name as client_name')
+            ->orderBy('payment_date', 'asc')
+            ->get();
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        $sheet->setTitle('Recibos de Caja');
+        
+        $headers = ['Recibo ID', 'Fecha Abono', 'Factura', 'Cliente', 'Método de Pago', 'Valor', 'Observaciones'];
+        
+        foreach ($headers as $colIdx => $header) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1);
+            $sheet->setCellValue($colLetter . '1', $header);
+            $sheet->getStyle($colLetter . '1')->getFont()->setBold(true);
+            $sheet->getStyle($colLetter . '1')->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()->setARGB('F1F5F9');
+        }
+
+        $row = 2;
+        $totalValor = 0;
+        foreach ($payments as $payment) {
+            $sheet->setCellValue('A' . $row, $payment->id);
+            $sheet->setCellValue('B' . $row, fecha_co($payment->payment_date));
+            $sheet->setCellValue('C' . $row, $payment->invoice_number);
+            $sheet->setCellValue('D' . $row, $payment->client_name);
+            $sheet->setCellValue('E' . $row, ucfirst($payment->payment_method));
+            $sheet->setCellValue('F' . $row, $payment->amount);
+            $sheet->setCellValue('G' . $row, $payment->observation);
+
+            $sheet->getStyle('F' . $row)->getNumberFormat()->setFormatCode('$#,##0');
+            $totalValor += $payment->amount;
+            $row++;
+        }
+
+        $sheet->setCellValue('E' . $row, 'TOTAL');
+        $sheet->getStyle('E' . $row)->getFont()->setBold(true);
+        $sheet->setCellValue('F' . $row, $totalValor);
+        $sheet->getStyle('F' . $row)->getFont()->setBold(true);
+        $sheet->getStyle('F' . $row)->getNumberFormat()->setFormatCode('$#,##0');
+
+        foreach (range(1, count($headers)) as $colIdx) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="Recibos_de_Caja_' . $startDate . '_al_' . $endDate . '.xlsx"');
+        header('Cache-Control: max-age=0');
+        
+        $writer->save('php://output');
+        exit;
+    }
 }

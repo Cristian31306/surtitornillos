@@ -52,12 +52,11 @@
                 </div>
             </div>
             <div class="filter-panel-actions">
-                <button type="submit" class="filter-btn-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                <button type="button" class="filter-btn-primary" onclick="document.getElementById('export-payments-panel').style.display = document.getElementById('export-payments-panel').style.display === 'none' ? 'block' : 'none';" style="background-color: var(--primary);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                     </svg>
-                    Filtrar
+                    Recibos de caja detallados por factura
                 </button>
                 @if($search || $status || $cliente)
                     <a href="{{ route('invoices.index') }}" class="filter-btn-clear">
@@ -83,6 +82,33 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Nueva Factura
                 </a>
+            </div>
+        </form>
+    </div>
+
+    {{-- Panel de Exportar Recibos (oculto por defecto) --}}
+    <div id="export-payments-panel" class="filter-panel" style="display: none; margin-bottom: 1.5rem; background-color: #f8fafc; border: 1px solid #e2e8f0;">
+        <form method="GET" action="{{ route('payments.export') }}" class="filter-panel-form" style="padding: 1rem;">
+            <div style="margin-bottom: 0.5rem; font-weight: 600; color: var(--text-color);">Descargar Informe de Pagos / Abonos</div>
+            <div class="filter-panel-fields" style="align-items: flex-end;">
+                <div class="filter-field">
+                    <label class="filter-label">Fecha de Inicio</label>
+                    <div class="filter-input-wrap">
+                        <input type="date" name="start_date" class="filter-search-input" required style="padding-left: 0.75rem;">
+                    </div>
+                </div>
+                <div class="filter-field">
+                    <label class="filter-label">Fecha de Fin</label>
+                    <div class="filter-input-wrap">
+                        <input type="date" name="end_date" class="filter-search-input" required style="padding-left: 0.75rem;">
+                    </div>
+                </div>
+                <div class="filter-field">
+                    <button type="submit" class="filter-btn-primary" style="background-color: #16a34a; border-color: #16a34a; height: 42px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Exportar Informe
+                    </button>
+                </div>
             </div>
         </form>
     </div>

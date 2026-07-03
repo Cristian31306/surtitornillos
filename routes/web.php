@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/facturas/{invoice}/estado', [InvoiceController::class, 'updateStatus'])->name('invoices.updateStatus');
 
     // Pagos (Abonos)
+    Route::get('/pagos/exportar', [PaymentController::class, 'exportExcel'])->name('payments.export');
     Route::post('/facturas/{invoice}/abonos', [PaymentController::class, 'store'])->name('payments.store');
     Route::delete('/abonos/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
 
