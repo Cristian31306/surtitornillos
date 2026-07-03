@@ -122,10 +122,10 @@
                         <th>Cliente</th>
                         @php
                             $sortBy = request()->query('sort_by', 'issue_date');
-                            $sortDir = request()->query('sort_dir', 'desc');
+                            $sortDir = request()->query('sort_dir', 'asc');
                             
                             $getSortUrl = function($column) use ($sortBy, $sortDir) {
-                                $newDir = ($sortBy === $column && $sortDir === 'desc') ? 'asc' : 'desc';
+                                $newDir = ($sortBy === $column && $sortDir === 'asc') ? 'desc' : 'asc';
                                 return request()->fullUrlWithQuery(['sort_by' => $column, 'sort_dir' => $newDir]);
                             };
                             

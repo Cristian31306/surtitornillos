@@ -16,7 +16,7 @@ class InvoiceController extends Controller
         $cliente = $request->query('cliente');
         
         $sortBy  = $request->query('sort_by', 'issue_date');
-        $sortDir = $request->query('sort_dir', 'desc');
+        $sortDir = $request->query('sort_dir', 'asc');
         
         $allowedSorts = [
             'issue_date' => 'issue_date',
@@ -27,7 +27,7 @@ class InvoiceController extends Controller
         ];
         
         $sortColumn = $allowedSorts[$sortBy] ?? 'issue_date';
-        $validSortDir = in_array(strtolower($sortDir), ['asc', 'desc']) ? $sortDir : 'desc';
+        $validSortDir = in_array(strtolower($sortDir), ['asc', 'desc']) ? $sortDir : 'asc';
 
         $invoices = DB::table('v_invoices_summary')
             ->when($search,  fn($q) => $q->where('invoice_number', 'like', "%{$search}%"))
@@ -56,7 +56,7 @@ class InvoiceController extends Controller
         $cliente = $request->query('cliente');
         
         $sortBy  = $request->query('sort_by', 'issue_date');
-        $sortDir = $request->query('sort_dir', 'desc');
+        $sortDir = $request->query('sort_dir', 'asc');
         
         $allowedSorts = [
             'issue_date' => 'issue_date',
@@ -67,7 +67,7 @@ class InvoiceController extends Controller
         ];
         
         $sortColumn = $allowedSorts[$sortBy] ?? 'issue_date';
-        $validSortDir = in_array(strtolower($sortDir), ['asc', 'desc']) ? $sortDir : 'desc';
+        $validSortDir = in_array(strtolower($sortDir), ['asc', 'desc']) ? $sortDir : 'asc';
 
         $invoices = DB::table('v_invoices_summary')
             ->when($search,  fn($q) => $q->where('invoice_number', 'like', "%{$search}%"))
