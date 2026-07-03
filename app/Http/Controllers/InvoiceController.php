@@ -12,7 +12,7 @@ class InvoiceController extends Controller
     public function index(Request $request)
     {
         $search  = $request->query('search');
-        $status  = $request->query('status');
+        $status  = $request->has('status') ? $request->query('status') : 'pendiente';
         $cliente = $request->query('cliente');
         
         $sortBy  = $request->query('sort_by', 'issue_date');
@@ -52,7 +52,7 @@ class InvoiceController extends Controller
     public function exportExcel(Request $request)
     {
         $search  = $request->query('search');
-        $status  = $request->query('status');
+        $status  = $request->has('status') ? $request->query('status') : 'pendiente';
         $cliente = $request->query('cliente');
         
         $sortBy  = $request->query('sort_by', 'issue_date');
