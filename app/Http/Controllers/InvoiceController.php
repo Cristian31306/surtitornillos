@@ -182,7 +182,9 @@ class InvoiceController extends Controller
         ]);
 
         $validated['discount'] = $validated['discount'] ?? 0;
-        $validated['status'] = 'pendiente';
+        
+        $saldo = $validated['total_amount'] - $validated['discount'];
+        $validated['status'] = ($saldo <= 0.01) ? 'pagada' : 'pendiente';
 
         $invoice = Invoice::create($validated);
 
@@ -228,6 +230,17 @@ class InvoiceController extends Controller
         $validated['discount'] = $validated['discount'] ?? 0;
 
         $invoice->update($validated);
+
+        // Recalcular saldo y actualizar status si es necesario
+        $totalPagado = $invoice->payments()->sum('amount');
+        $totalAjuste = $invoice->adjustments()->sum('amount');
+        $saldo = $invoice->total_amount - $invoice->discount - $totalPagado - $totalAjuste;
+
+        if ($saldo <= 0.01 && $invoice->status === 'pendiente') {
+            $invoice->update(['status' => 'pagada']);
+        } elseif ($saldo > 0.01 && $invoice->status === 'pagada') {
+            $invoice->update(['status' => 'pendiente']);
+        }
 
         \App\Helpers\AuditHelper::log(
             'edicion_factura',
